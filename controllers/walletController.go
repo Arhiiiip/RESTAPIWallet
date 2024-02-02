@@ -65,6 +65,11 @@ func (walletHandler *WalletHandler) SendMoney(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	if requestData.Amount < 0 {
+		http.Error(w, "Amount cannot be less than zero", http.StatusBadRequest)
+		return
+	}
+
 	tx := walletHandler.DB.Begin()
 
 	defer func() {
