@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
+	"time"
 )
 
 type WalletHandler struct {
@@ -53,7 +54,37 @@ func (walletHandler *WalletHandler) SendMoney(w http.ResponseWriter, r *http.Req
 }
 
 func (walletHandler *WalletHandler) GetWalletHistory(w http.ResponseWriter, r *http.Request) {
-	//todo Разработать логику возврата истории транзакций
+	params := mux.Vars(r)
+	walletID := params["walletId"]
+	var transactions []model.Transaction
+	if err := walletHandler.DB.Where("from = ? OR to = ?", walletID, walletID).Find(&transactions).Error; err != nil {
+		http.Error(w, "Failed to retrieve transaction history", http.StatusInternalServerError)
+		return
+	}
+
+	response := make([]struct {
+		Time   time.Time `json:"time"`
+		From   string    `json:"from"`
+		To     string    `json:"to"`
+		Amount float64   `json:"amount"`
+	}, len(transactions))
+
+	for i, transaction := range transactions {
+		response[i] = struct {
+			Time   time.Time `json:"time"`
+			From   string    `json:"from"`
+			To     string    `json:"to"`
+			Amount float64   `json:"amount"`
+		}{
+			Time:   transaction.Time,
+			From:   transaction.From,
+			To:     transaction.To,
+			Amount: transaction.Amount,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func (walletHandler *WalletHandler) GetWalletDetails(w http.ResponseWriter, r *http.Request) {
