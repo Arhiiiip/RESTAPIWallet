@@ -135,7 +135,7 @@ func (walletHandler *WalletHandler) GetWalletHistory(w http.ResponseWriter, r *h
 	params := mux.Vars(r)
 	walletID := params["walletId"]
 	var transactions []model.Transaction
-	if err := walletHandler.DB.Where("from = ? OR to = ?", walletID, walletID).Find(&transactions).Error; err != nil {
+	if err := walletHandler.DB.Where("\"from\" = ? OR \"to\" = ?", walletID, walletID).Find(&transactions).Error; err != nil {
 		http.Error(w, "Failed to retrieve transaction history", http.StatusInternalServerError)
 		return
 	}
