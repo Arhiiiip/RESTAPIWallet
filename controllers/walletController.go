@@ -4,6 +4,7 @@ import (
 	model "RESTAPIWallet/models"
 	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -56,5 +57,22 @@ func (walletHandler *WalletHandler) GetWalletHistory(w http.ResponseWriter, r *h
 }
 
 func (walletHandler *WalletHandler) GetWalletDetails(w http.ResponseWriter, r *http.Request) {
-	//todo Разрботать логику возврата детайлей кошелька
+	params := mux.Vars(r)
+	walletID := params["walletId"]
+	var wallet model.Wallet
+	if err := walletHandler.DB.First(&wallet, "id = ?", walletID).Error; err != nil {
+		http.Error(w, "Wallet not found", http.StatusNotFound)
+		return
+	}
+
+	response := struct {
+		ID      string  `json:"id"`
+		Balance float64 `json:"balance"`
+	}{
+		ID:      wallet.ID,
+		Balance: wallet.Balance,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
